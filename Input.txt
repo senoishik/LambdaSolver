@@ -1,0 +1,10 @@
+0.4 %dx
+40.0 %xmax
+40.0 %ymax
+1.0 %epsilon
+1.0 %mu
+1.0 %Bm
+0.0 %Theta_Bar
+0.0 %Tbar
+20.0 %Simulation End Time
+0.25% Post Process Intervals
