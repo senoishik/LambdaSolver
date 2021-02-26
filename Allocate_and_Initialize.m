@@ -8,16 +8,16 @@ Xc=Cell.Xc;
 Yc=Cell.Yc;
 
 
-ncellsmax=size(Xc,2);
-Lambda1=zeros(1,ncellsmax);
-Lambda2=zeros(1,ncellsmax);
+% ncellsmax=size(Xc,2);
+% Lambda1=zeros(1,ncellsmax);
+% Lambda2=zeros(1,ncellsmax);
 
 
-%Initialize Variables
-c=20;
-%c=0;
-h=1.0;
-a=2.0;
+% %Initialize Variables
+% c=20;
+% %c=0;
+% h=1.0;
+% a=2.0;
 
 %Theta=0.0;%sin(pi*Xc/xmax).*sin(pi*Yc/ymax);
 CenterX = Input.xmax/2;
@@ -26,16 +26,19 @@ Radius=(Xc-CenterX).^2+(Yc-CenterY).^2;
 Radius=sqrt(Radius);
 
 
+if  (Input.restart==0)
+    input_initial_lambda();
+elseif (Input.restart==1)
+    input_restart_lambda();
+end
 
-Lambda2(:,((Yc>(c-h))&(Yc<(c+h))))=0.5*(1+tanh(-(Xc(:,((Yc>(c-h))&(Yc<(c+h))))-c)/a));
-
-
-%Lambda1(:,((Xc>(c-h))&(Xc<(c+h))))=0.5*(1+tanh(-(Yc(:,((Xc>(c-h))&(Xc<(c+h))))-c)/a));
-
-
-%Cell.Theta=Theta;
-Cell.Lambda1=Lambda1;
-Cell.Lambda2=Lambda2;
+% Lambda2(:,((Yc>(c-h))&(Yc<(c+h))))=0.5*(1+tanh(-(Xc(:,((Yc>(c-h))&(Yc<(c+h))))-c)/a));
+% %Lambda1(:,((Xc>(c-h))&(Xc<(c+h))))=0.5*(1+tanh(-(Yc(:,((Xc>(c-h))&(Xc<(c+h))))-c)/a));
+% 
+% %Cell.Theta=Theta;
+% 
+% Cell.Lambda1=Lambda1;
+% Cell.Lambda2=Lambda2;
 
 theta_bar=Input.theta_bar;
 t_bar=Input.t_bar;

@@ -15,6 +15,7 @@ Input.Bm=A(6);
 
 Input.theta_bar=A(7);
 Input.t_bar=A(8);
+Input.restart=A(11);
 
 Cell.T_total=A(9);
 Cell.T_plot=A(10);

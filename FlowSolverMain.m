@@ -20,19 +20,19 @@ AdvanceInTime()
 
 
 
-writerObj=VideoWriter('L1.avi');
-F=Cell.Lambda1_plot;
-writerObj.FrameRate = 1;
-% open the video writer
-open(writerObj);
-% write the frames to the video
-for i=1:length(F)
-    % convert the image to a frame
-    frame = F(i) ;    
-    writeVideo(writerObj, frame);
-end
-% close the writer object
-close(writerObj);
+% writerObj=VideoWriter('L1.avi');
+% F=Cell.Lambda1_plot;
+% writerObj.FrameRate = 1;
+% % open the video writer
+% open(writerObj);
+% % write the frames to the video
+% for i=1:length(F)
+%     % convert the image to a frame
+%     frame = F(i) ;    
+%     writeVideo(writerObj, frame);
+% end
+% % close the writer object
+% close(writerObj);
 
 writerObj=VideoWriter('L2.avi');
 F=Cell.Lambda2_plot;
@@ -139,7 +139,15 @@ ylabel('$\mathbf{RHS_2}$','Interpreter','Latex');
 set(gca,'LineWidth',linewidth)
 set(gca,'FontSize',fontsize)
 
+figure(11)
+plot(Cell.simulation_time,Cell.rhs_norm,'r','LineWidth',linewidth)
+xlabel('$\mathbf{t}$','Interpreter','Latex');
+ylabel('$\mathbf{norm of residual (rhs)}$','Interpreter','Latex');
+set(gca,'LineWidth',linewidth)
+set(gca,'FontSize',fontsize)
 
+filename = 'equilibrium_feb22.mat';
+save(filename)
 
 
 

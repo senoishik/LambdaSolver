@@ -15,6 +15,7 @@ function ComputeTheta()
   epsilon=Input.Epsilon;
   Bm=Input.Bm;
   tbar=Input.t_bar;
+  tbar_applied=0;
   
   StiffnessMatrix=zeros(ncellsmax,ncellsmax);
   ForceVector=zeros(ncellsmax,1);
@@ -60,12 +61,19 @@ function ComputeTheta()
     clear L2
     L1=Cell.Lambda1(Pts);
     L2=Cell.Lambda2(Pts);
+    
+    if (i==1)
+        tbar_applied = tbar;
+    else
+        tbar_applied = 0;
+    end
+        
     for j=1:nbdrypts
         StiffnessMatrix(Pts(j),Pts(j))=1.0/(dx);
         StiffnessMatrix(Pts(j),Nbrs(j))=-1.0/(dx);
         Factor1=(1-heaviside(i-2.5));
         Factor2=heaviside(i-2.5);
-        ForceVector(Pts(j))=(tbar+power(-1,i+1)*Factor1*L1(j)+power(-1,i+1)*Factor2*L2(j));
+        ForceVector(Pts(j))=(tbar_applied+power(-1,i+1)*Factor1*L1(j)+power(-1,i+1)*Factor2*L2(j));
     end
   end
   
@@ -89,6 +97,13 @@ function ComputeTheta()
   
   for i=1:2
       for j=1:2
+          
+          if (i==1)
+                tbar_applied = tbar;
+          else
+                tbar_applied = 0;
+          end
+          
           Pt=Corner(i,j);
           StiffnessMatrix(Pt,:)=0.0;
           StiffnessMatrix(Pt,Pt)=1.0/dx;
@@ -96,7 +111,7 @@ function ComputeTheta()
           StiffnessMatrix(Pt,Yneighbor(i,j))=-0.5/dx;
           L1=Cell.Lambda1(Pt);
           L2=Cell.Lambda2(Pt);
-          ForceVector(Pt)=(0.5*tbar+0.5*((power(-1,i+1)*L1+power(-1,j+1)*L2)));
+          ForceVector(Pt)=(0.5*tbar_applied+0.5*((power(-1,i+1)*L1+power(-1,j+1)*L2)));
       end
   end
   

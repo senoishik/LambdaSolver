@@ -6,20 +6,26 @@ function AdvanceInTime()
      thetabar=Input.theta_bar;
      tbar=Input.t_bar;
      
-     
      time=0;
+     if (Input.restart==0)
+        time=0;
+     elseif (Input.restart ==1)
+        time= Cell.simulation_time(1);
+     end
+     
      T_end=Cell.T_total;
      ComputeCellIndex=Cell.ComputeCell;
      T_plot=Cell.T_plot;
-     
+     residual_rhs = 1;
      step=0;
      itimestep=0;
-     while(time<=T_end)
+     while(time<=T_end && residual_rhs > 1E-2)
          [dt,WaveSpeed]=GetTimeStep();
          time=time+dt;
          itimestep=itimestep+1;
          disp(['itimestep = ',num2str(itimestep)])
          disp(['dt = ',num2str(dt)])
+         disp(['residual_rhs = ',num2str(residual_rhs)])
          disp(['total time = ',num2str(time)])
          disp(['--------------------------'])
          
@@ -46,18 +52,29 @@ function AdvanceInTime()
           %[~,~]=DiffusionSolver();
          
          ComputeTheta_StaggeredGrid()
-         Cell.sourceX(itimestep)=max(abs(L1_flux-L1_Source));
+         %Cell.sourceX(itimestep)=max(abs(L1_flux-L1_Source));
+         Cell.sourceX(itimestep)=0.0;
          Cell.sourceY(itimestep)=max(abs(L2_flux-L2_Source));
+         %Cell.rhs_norm(itimestep)=max(sqrt((L1_flux-L1_Source).^2 + (L2_flux-L2_Source).^2));
+         Cell.rhs_norm(itimestep)=max(L2_flux-L2_Source);
          Cell.simulation_time(itimestep)=time;
+         
+         residual_rhs = Cell.rhs_norm(itimestep);
          
          if((rem(time,T_plot)>rem(time+dt,T_plot))||(itimestep==1))   
            step=step+1;  
            PostProcessMovieFiles(Cell.Lambda1,Cell.Lambda2,Cell.Theta,Cell.Xc,Cell.Yc,time,step,abs(dL1dy-dL2dx));
          end
           
-                  
-      
+         if(rem(itimestep,5)==0)         
+             write_output_final(itimestep);
+         end
+         
      end
+     
+     write_output_final(itimestep);
+     
+     
 end
 
 
@@ -103,6 +120,13 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      liney_L1_final=liney_L1;
      linex_L2_final=linex_L2;
      linex_L1_final=linex_L1;
+     Cell.liney_L2_final(step,:)=liney_L2_final;
+     Cell.liney_L1_final(step,:)=liney_L1_final;
+     Cell.linex_L2_final(step,:)=linex_L2_final;
+     Cell.linex_L1_final(step,:)=linex_L1_final;
+     Cell.linex_final=linex_final;
+     Cell.liney_final=liney_final;
+     
      if(step==1)
          Cell.linex_initial=linex_final;
          Cell.liney_initial=liney_final;
@@ -143,23 +167,23 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      linewidth=2;
      fontsize=12;
      
-     figure(1)    
-     %subplot(3,3,1)
-     contourf(x,y,l1,'LineColor','none')
-     caxis([-0.25 0.25])
-     title(['Lambda1 at t = ',num2str(time)]);
-     xlabel('$\mathbf{X}$','Interpreter','Latex');
-     ylabel('$\mathbf{Y}$','Interpreter','Latex');
-     axis square
-     set(gca,'LineWidth',linewidth)
-     set(gca,'FontSize',fontsize)
-     colorbar
-     Cell.Lambda1_plot(step)=getframe(gcf);
+%      figure(1)    
+%      %subplot(3,3,1)
+%      contourf(x,y,l1,'LineColor','none')
+%     %caxis([-0.25 0.25])
+%      title(['Lambda1 at t = ',num2str(time)]);
+%      xlabel('$\mathbf{X}$','Interpreter','Latex');
+%      ylabel('$\mathbf{Y}$','Interpreter','Latex');
+%      axis square
+%      set(gca,'LineWidth',linewidth)
+%      set(gca,'FontSize',fontsize)
+%      colorbar
+%      Cell.Lambda1_plot(step)=getframe(gcf);
      
      figure(2)
      %subplot(3,3,2)
      contourf(x,y,l2,'LineColor','none')
-     caxis([0 1.5])
+     %caxis([0 1.5])
      title(['Lambda2 at t = ',num2str(time)]);
      xlabel('$\mathbf{X}$','Interpreter','Latex');
      ylabel('$\mathbf{Y}$','Interpreter','Latex');
@@ -172,7 +196,7 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      figure(3)
      %subplot(3,3,3)
      contourf(x,y,theta,'LineColor','none')
-     caxis([-0.1 1.5])
+     %caxis([-0.1 1.5])
      title(['theta at t = ',num2str(time)]);
      xlabel('$\mathbf{X}$','Interpreter','Latex');
      ylabel('$\mathbf{Y}$','Interpreter','Latex');
@@ -187,7 +211,7 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      figure(4)
      %subplot(3,3,3)
      contourf(x_staggered,y_staggered,(gradtheta),'LineColor','none')
-     caxis([0 0.18])
+     %caxis([0 0.18])
      title(['|grad(theta)-Lambda| at t = ',num2str(time)]);
      %title(['d(theta)/dy at t = ',num2str(time)]);
      xlabel('$\mathbf{X}$','Interpreter','Latex');
@@ -202,7 +226,7 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      
      figure(5)
      contourf(x,y,sqrt(l1.*l1+l2.*l2),'LineColor','none')
-     caxis([0 1.5])
+     %caxis([0 1.5])
      title(['|Lambda| at t = ',num2str(time)]);
      xlabel('$\mathbf{X}$','Interpreter','Latex');
      ylabel('$\mathbf{Y}$','Interpreter','Latex');
@@ -269,9 +293,9 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      
      figure(8)
      subplot(2,2,1)
-     h(1)=plot(liney_initial,liney_L2_initial,'r','LineWidth',2,'DisplayName','Initial');
+     h(1)=plot(Cell.liney_initial,Cell.liney_L2_initial,'r','LineWidth',2,'DisplayName','Initial');
      hold on
-     h(2)=plot(liney_final,liney_L2_final,'k','LineWidth',2,'DisplayName','Final');
+     h(2)=plot(Cell.liney_final,Cell.liney_L2_final(end,:),'k','LineWidth',2,'DisplayName',num2str(Cell.simulation_time(end)));
      ylim([0 1.2])
      hold off
      legend(h(1:2))
@@ -282,9 +306,9 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      set(gca,'FontSize',fontsize)
      
      subplot(2,2,2)
-     h(1)=plot(linex_initial,linex_L2_initial,'r','LineWidth',2,'DisplayName','Initial');
+     h(1)=plot(Cell.linex_initial,Cell.linex_L2_initial,'r','LineWidth',2,'DisplayName','Initial');
      hold on
-     h(2)=plot(linex_final,linex_L2_final,'k','LineWidth',2,'DisplayName','Final');
+     h(2)=plot(Cell.linex_final,Cell.linex_L2_final(end,:),'k','LineWidth',2,'DisplayName',num2str(Cell.simulation_time(end)));
      ylim([0 1.2])
      hold off
      legend(h(1:2))
@@ -295,9 +319,9 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      set(gca,'FontSize',fontsize)
      
      subplot(2,2,3)
-     h(1)=plot(liney_initial,liney_L1_initial,'r','LineWidth',2,'DisplayName','Initial');
+     h(1)=plot(Cell.liney_initial,Cell.liney_L1_initial,'r','LineWidth',2,'DisplayName','Initial');
      hold on
-     h(2)=plot(liney_final,liney_L1_final,'k','LineWidth',2,'DisplayName','Final');
+     h(2)=plot(Cell.liney_final,Cell.liney_L1_final(end,:),'k','LineWidth',2,'DisplayName',num2str(Cell.simulation_time(end)));
      ylim([-0.08 0.08])
      hold off
      legend(h(1:2))
@@ -308,9 +332,9 @@ function PostProcessMovieFiles(L1,L2,Theta,X,Y,time,step,curl)
      set(gca,'FontSize',fontsize)
      
      subplot(2,2,4)
-     h(1)=plot(linex_initial,linex_L1_initial,'r','LineWidth',2,'DisplayName','Initial');
+     h(1)=plot(Cell.linex_initial,Cell.linex_L1_initial,'r','LineWidth',2,'DisplayName','Initial');
      hold on
-     h(2)=plot(linex_final,linex_L1_final,'k','LineWidth',2,'DisplayName','Final');
+     h(2)=plot(Cell.linex_final,Cell.linex_L1_final(end,:),'k','LineWidth',2,'DisplayName',num2str(Cell.simulation_time(end)));
      ylim([-0.15 0.15])
      hold off
      legend(h(1:2))
@@ -360,7 +384,8 @@ function[Theta,L1,L2]=UpdateVariables(L1_flux,L1_Source,L2_flux,L2_Source,dt)
   L2North=Cell.Lambda2(NorthIndex);
   L2South=Cell.Lambda2(SouthIndex);
   
-  L1=L1-dt*L1_flux+dt*L1_Source;
+  %L1=L1-dt*L1_flux+dt*L1_Source;
+  L1=0;
   L2=L2-dt*L2_flux+dt*L2_Source;
   
   
